@@ -111,11 +111,13 @@ Message:
     else:
         await update.message.reply_text(ai_text)
 # ===== App Build =====
-app = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
 
-app.add_handler(CommandHandler("start", start))
-app.add_handler(CommandHandler("post", post))
-app.add_handler(CommandHandler("autopost", autopost))
+p = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
+
+p.add_handler(CommandHandler("start", start))
+p.add_handler(CommandHandler("post", post))
+p.add_handler(CommandHandler("autopost", autopost))
+
 p.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
-app.run_polling()
+p.run_polling()

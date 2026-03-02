@@ -22,14 +22,14 @@ X_ACCESS_TOKEN_SECRET = os.getenv("X_ACCESS_SECRET")
 # ===== OPENAI SETUP =====
 client = OpenAI(api_key=OPENAI_API_KEY)
 
-# ===== X SETUP =====
-auth = tweepy.OAuth1UserHandler(
-    X_CONSUMER_KEY,
-    X_CONSUMER_SECRET,
-    X_ACCESS_TOKEN,
-    X_ACCESS_TOKEN_SECRET
+# ===== X SETUP (V2 CLIENT) =====
+
+client_v2 = tweepy.Client(
+    consumer_key=X_CONSUMER_KEY,
+    consumer_secret=X_CONSUMER_SECRET,
+    access_token=X_ACCESS_TOKEN,
+    access_token_secret=X_ACCESS_TOKEN_SECRET,
 )
-x_api = tweepy.API(auth)
 
 # ===== COMMANDS =====
 
@@ -44,7 +44,7 @@ async def post(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     try:
-        x_api.update_status(text)
+        client_v2.create_tweet(text=text)
         await update.message.reply_text("Posted to X 🚀")
     except Exception as e:
         await update.message.reply_text(f"Error posting: {str(e)}")

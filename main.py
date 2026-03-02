@@ -10,7 +10,10 @@ from telegram.ext import (
     filters,
 )
 
-# ===== ENV VARIABLES =====
+# =========================
+# ENV VARIABLES
+# =========================
+
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
@@ -19,19 +22,26 @@ X_CONSUMER_SECRET = os.getenv("X_API_SECRET")
 X_ACCESS_TOKEN = os.getenv("X_ACCESS_TOKEN")
 X_ACCESS_TOKEN_SECRET = os.getenv("X_ACCESS_SECRET")
 
-# ===== OPENAI SETUP =====
+# =========================
+# OPENAI SETUP
+# =========================
+
 client = OpenAI(api_key=OPENAI_API_KEY)
 
-# ===== X SETUP (V2 CLIENT) =====
+# =========================
+# X API v2 SETUP (MODERN)
+# =========================
 
-client_v2 = tweepy.Client(
+x_client = tweepy.Client(
     consumer_key=X_CONSUMER_KEY,
     consumer_secret=X_CONSUMER_SECRET,
     access_token=X_ACCESS_TOKEN,
     access_token_secret=X_ACCESS_TOKEN_SECRET,
 )
 
-# ===== COMMANDS =====
+# =========================
+# TELEGRAM COMMANDS
+# =========================
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("Sovereign AI is online 👑")
@@ -40,35 +50,40 @@ async def post(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = " ".join(context.args)
 
     if not text:
-        await update.message.reply_text("Use: /post your message here")
+        await update.message.reply_text("Use: /post your message")
         return
 
     try:
-        client_v2.create_tweet(text=text)
+        x_client.create_tweet(text=text)
         await update.message.reply_text("Posted to X 🚀")
     except Exception as e:
-        await update.message.reply_text(f"Error posting: {str(e)}")
+        await update.message.reply_text(f"X Error: {str(e)}")
 
 async def autopost(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         response = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[
-                {"role": "system", "content": "Write a powerful AI thought-leadership post for X."}
+                {
+                    "role": "system",
+                    "content": "Write a bold AI thought-leadership post for X."
+                }
             ],
             temperature=0.7,
         )
 
         tweet = response.choices[0].message.content.strip()
 
-        x_api.update_status(tweet)
+        x_client.create_tweet(text=tweet)
 
-        await update.message.reply_text(f"AI Posted:\n\n{tweet}")
+        await update.message.reply_text(f"AI Posted 🚀\n\n{tweet}")
 
     except Exception as e:
         await update.message.reply_text(f"Error: {str(e)}")
 
-# ===== AUTONOMOUS MESSAGE HANDLER =====
+# =========================
+# AUTONOMOUS DECISION LOGIC
+# =========================
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_message = update.message.text
@@ -77,9 +92,9 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         prompt = f"""
 You are Sovereign AI.
 
-If the message below has ANY strong AI, tech, finance,
-strategy, or thought-leadership angle,
-respond EXACTLY like this:
+If the message below has ANY strong AI, tech,
+strategy, finance or thought-leadership angle,
+respond EXACTLY in this format:
 
 POST:
 <content>
@@ -103,12 +118,12 @@ Message:
 
         if ai_text.startswith("POST:"):
             content = ai_text.replace("POST:", "").strip()
-            x_api.update_status(content)
+            x_client.create_tweet(text=content)
             await update.message.reply_text("Posted to X 🚀")
 
         elif ai_text.startswith("CHAT:"):
-            content = ai_text.replace("CHAT:", "").strip()
-            await update.message.reply_text(content)
+            reply = ai_text.replace("CHAT:", "").strip()
+            await update.message.reply_text(reply)
 
         else:
             await update.message.reply_text(ai_text)
@@ -116,7 +131,9 @@ Message:
     except Exception as e:
         await update.message.reply_text(f"Error: {str(e)}")
 
-# ===== APP BUILD =====
+# =========================
+# BUILD TELEGRAM APP
+# =========================
 
 app = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
 
